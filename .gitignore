@@ -1,0 +1,28 @@
+# Secrets
+.env
+rag_system/.env
+
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Large data files
+data/
+ml_engine/models/*.pkl
+ml_engine/models/*.keras
+ml_engine/models/*.db
+ml_engine/models/mlruns/
+rag_system/vector_store/
+
+# Reports (generated files)
+agents/*.csv
+agents/*.txt
+
+# Salesforce project
+neurolvault-salesforce/
+
+# Notebooks
+notebooks/

@@ -1,0 +1,31 @@
+# API
+fastapi
+uvicorn
+pydantic
+python-dotenv
+httpx
+
+# ML
+scikit-learn
+xgboost
+numpy
+pandas
+joblib
+imbalanced-learn
+shap
+
+# Deep Learning
+tensorflow-cpu
+
+# RAG/LLM
+sentence-transformers
+faiss-cpu
+groq
+langchain
+langchain-groq
+
+# Bias Detection
+fairlearn
+
+# Visualization
+matplotlib

@@ -1,0 +1,40 @@
+============================================================
+NEUROLVAULT AI BIAS & COMPLIANCE REPORT
+============================================================
+Model: XGBoost Loan Default Predictor
+Records Analyzed: 148,629
+
+
+--- Gender Fairness Analysis ---
+                   accuracy  selection_rate  false_positive_rate  false_negative_rate
+Gender                                                                               
+Female             0.748789        0.000037             0.000049             1.000000
+Joint              0.808437        0.000024             0.000030             1.000000
+Male               0.738100        0.000024             0.000032             1.000000
+Sex Not Available  0.719405        0.005313             0.000000             0.981418
+
+✅ COMPLIANT: Gender within acceptable range (0.53% disparity)
+
+--- Age Group Fairness Analysis ---
+         accuracy  selection_rate  false_positive_rate  false_negative_rate
+age                                                                        
+25-34    0.778080        0.000000             0.000000                  1.0
+35-44    0.777304        0.000000             0.000000                  1.0
+45-54    0.759493        0.000000             0.000000                  1.0
+55-64    0.741196        0.000000             0.000000                  1.0
+65-74    0.731517        0.000096             0.000132                  1.0
+<25      0.710546        0.000000             0.000000                  1.0
+>74      0.699749        0.000139             0.000199                  1.0
+Unknown  1.000000        1.000000             0.000000                  0.0
+
+⚠️  BIAS ALERT: Age Group shows 100.00% selection rate disparity
+
+--- Region Fairness Analysis ---
+            accuracy  selection_rate  false_positive_rate  false_negative_rate
+Region                                                                        
+North       0.774888        0.000027             0.000035             1.000000
+North-East  0.695300        0.000000             0.000000             1.000000
+central     0.724721        0.000000             0.000000             1.000000
+south       0.736847        0.003141             0.000021             0.988263
+
+✅ COMPLIANT: Region within acceptable range (0.31% disparity)
