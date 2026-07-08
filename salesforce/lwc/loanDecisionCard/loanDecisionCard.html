@@ -1,0 +1,64 @@
+<template>
+    <div class="ld-container">
+        <div class="ld-header">
+            <div class="ld-icon">◆</div>
+            <div>
+                <div class="ld-title">Loan Eligibility Check</div>
+                <div class="ld-sub">Instant AI-powered decision</div>
+            </div>
+        </div>
+
+        <template if:false={showResult}>
+            <div class="ld-form">
+                <div class="ld-field">
+                    <label>Loan Amount ($)</label>
+                    <input type="number" value={loanAmount} onchange={handleChange} data-field="loanAmount" placeholder="150000"/>
+                </div>
+                <div class="ld-field">
+                    <label>Annual Income ($)</label>
+                    <input type="number" value={income} onchange={handleChange} data-field="income" placeholder="3500"/>
+                </div>
+                <div class="ld-field">
+                    <label>Credit Score</label>
+                    <input type="number" value={creditScore} onchange={handleChange} data-field="creditScore" placeholder="580"/>
+                </div>
+                <div class="ld-field">
+                    <label>Interest Rate (%)</label>
+                    <input type="number" value={rate} onchange={handleChange} data-field="rate" placeholder="4.5"/>
+                </div>
+                <div class="ld-field">
+                    <label>Debt-to-Income (%)</label>
+                    <input type="number" value={dti} onchange={handleChange} data-field="dti" placeholder="45"/>
+                </div>
+                <div class="ld-field">
+                    <label>Term (months)</label>
+                    <input type="number" value={term} onchange={handleChange} data-field="term" placeholder="360"/>
+                </div>
+
+                <button class="ld-btn" onclick={checkDecision} disabled={isLoading}>
+                    <template if:true={isLoading}>Analyzing…</template>
+                    <template if:false={isLoading}>Check Decision</template>
+                </button>
+            </div>
+        </template>
+
+        <template if:true={showResult}>
+            <div class="ld-result">
+                <div class={decisionClass}>
+                    <div class="ld-decision-icon">{decisionIcon}</div>
+                    <div class="ld-decision-text">{decisionText}</div>
+                    <div class="ld-prob">Default risk: {probabilityPct}</div>
+                </div>
+
+                <div class="ld-reasons">
+                    <div class="ld-reasons-title">Key factors in this decision</div>
+                    <template for:each={reasons} for:item="r">
+                        <div key={r} class="ld-reason">{r}</div>
+                    </template>
+                </div>
+
+                <button class="ld-btn ld-btn-ghost" onclick={reset}>Check Another</button>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,39 @@
+<template>
+    <div class="nv-container">
+        <div class="nv-header">
+            <div class="nv-avatar">◆</div>
+            <div class="nv-title">
+                <span class="nv-name">NeuralVault</span>
+                <span class="nv-status">AI Risk Advisor</span>
+            </div>
+        </div>
+
+        <div class="nv-chat" lwc:ref="chatArea">
+            <template for:each={messages} for:item="msg">
+                <div key={msg.id} class={msg.rowClass}>
+                    <div class={msg.bubbleClass}>{msg.text}</div>
+                </div>
+            </template>
+
+            <template if:true={isLoading}>
+                <div class="nv-row nv-row-ai">
+                    <div class="nv-bubble nv-bubble-ai nv-typing">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div class="nv-input-wrap">
+            <textarea
+                class="nv-input"
+                placeholder="Ask about loan risk, customers, or portfolio…"
+                value={question}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
+                rows="1"
+                lwc:ref="inputBox"></textarea>
+            <span class="nv-hint">Enter to send</span>
+        </div>
+    </div>
+</template>
