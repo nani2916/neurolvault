@@ -57,6 +57,20 @@
                     </template>
                 </div>
 
+                <template if:false={showAgentAnalysis}>
+                    <button class="ld-btn ld-btn-ghost" onclick={runFullAnalysis} disabled={isLoading}>
+                        <template if:true={isLoading}>Running agents…</template>
+                        <template if:false={isLoading}>Run Full AI Analysis</template>
+                    </button>
+                </template>
+
+                <template if:true={showAgentAnalysis}>
+                    <div class="ld-agent-box">
+                        <div class="ld-agent-title">AI Agent Analysis</div>
+                        <div class="ld-agent-text">{agentSummary}</div>
+                    </div>
+                </template>
+
                 <button class="ld-btn ld-btn-ghost" onclick={reset}>Check Another</button>
             </div>
         </template>

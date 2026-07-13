@@ -205,3 +205,24 @@
     color: #8b5cf6;
     font-weight: 600;
 }
+.ld-agent-box {
+    margin-top: 16px;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: rgba(139, 92, 246, 0.08);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.ld-agent-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c3aed;
+    margin-bottom: 8px;
+}
+
+.ld-agent-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #2a2f52;
+    white-space: pre-wrap;
+}
