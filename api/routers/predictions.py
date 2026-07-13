@@ -16,7 +16,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 MODEL_DIR = BASE_DIR / "ml_engine" / "models"
 
 
-# Input model — what Salesforce sends to our API
 class LoanApplication(BaseModel):
     loan_amount: float
     rate_of_interest: float
@@ -48,7 +47,6 @@ class LoanApplication(BaseModel):
     approv_in_adv: Optional[str] = "nopre"
 
 
-# Output model — what our API sends back to Salesforce
 class PredictionResponse(BaseModel):
     loan_id: Optional[str]
     default_probability: float
@@ -56,16 +54,28 @@ class PredictionResponse(BaseModel):
     recommendation: str
     top_risk_factors: list
 
+
+# Readable names for features
+FEATURE_LABELS = {
+    'rate_of_interest': 'Interest rate is high for this profile',
+    'credit_type': 'Credit history and type',
+    'property_value': 'Property value as collateral',
+    'loan_amount': 'Loan amount is large relative to profile',
+    'income': 'Income level relative to the loan',
+    'dtir1': 'Debt-to-income ratio',
+    'Credit_Score': 'Credit score',
+    'term': 'Loan term length',
+    'Gender': 'Applicant profile',
+    'Region': 'Region risk pattern',
+    'loan_purpose': 'Purpose of the loan',
+    'age': 'Age group'
+}
+
+
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_loan_default(application: LoanApplication):
-    """
-    Main prediction endpoint.
-    Salesforce sends loan data → returns risk assessment.
-    
-    URL: POST /api/predictions/predict
-    """
+    """Predict loan default and return personalized SHAP reasons."""
     try:
-        # Convert to DataFrame
         data = {
             'loan_amount': application.loan_amount,
             'rate_of_interest': application.rate_of_interest,
@@ -99,19 +109,41 @@ async def predict_loan_default(application: LoanApplication):
 
         df = pd.DataFrame([data])
 
-        # Encode categorical columns
-        le = LabelEncoder()
-        categorical = df.select_dtypes(include='object').columns
-        for col in categorical:
-            df[col] = le.fit_transform(df[col].astype(str))
+       # Fixed encodings matching training data
+        CATEGORY_MAPS = {
+            'loan_limit': {'cf': 0, 'ncf': 1, 'Unknown': 2},
+            'Gender': {'Female': 0, 'Joint': 1, 'Male': 2, 'Sex Not Available': 3},
+            'approv_in_adv': {'nopre': 0, 'pre': 1, 'Unknown': 2},
+            'loan_type': {'type1': 0, 'type2': 1, 'type3': 2},
+            'loan_purpose': {'p1': 0, 'p2': 1, 'p3': 2, 'p4': 3, 'Unknown': 4},
+            'Credit_Worthiness': {'l1': 0, 'l2': 1},
+            'open_credit': {'nopc': 0, 'opc': 1},
+            'business_or_commercial': {'b/c': 0, 'nob/c': 1},
+            'Neg_ammortization': {'neg_amm': 0, 'not_neg': 1, 'Unknown': 2},
+            'interest_only': {'int_only': 0, 'not_int': 1},
+            'lump_sum_payment': {'lpsm': 0, 'not_lpsm': 1},
+            'construction_type': {'mh': 0, 'sb': 1},
+            'occupancy_type': {'ir': 0, 'pr': 1, 'sr': 2},
+            'Secured_by': {'home': 0, 'land': 1},
+            'total_units': {'1U': 0, '2U': 1, '3U': 2, '4U': 3},
+            'credit_type': {'CIB': 0, 'CRIF': 1, 'EQUI': 2, 'EXP': 3},
+            'co-applicant_credit_type': {'CIB': 0, 'EXP': 1},
+            'age': {'<25': 0, '25-34': 1, '35-44': 2, '45-54': 3,
+                    '55-64': 4, '65-74': 5, '>74': 6, 'Unknown': 7},
+            'submission_of_application': {'not_inst': 0, 'to_inst': 1, 'Unknown': 2},
+            'Region': {'North': 0, 'North-East': 1, 'central': 2, 'south': 3},
+            'Security_Type': {'direct': 0, 'Indriect': 1}
+        }
+
+        for col, mapping in CATEGORY_MAPS.items():
+            if col in df.columns:
+                df[col] = df[col].map(mapping).fillna(0)
 
         df = df.fillna(0)
 
-        # Load model and predict
         model = joblib.load(MODEL_DIR / "xgboost_loan_default.pkl")
-        probability = model.predict_proba(df.values)[0][1]
+        probability = float(model.predict_proba(df.values)[0][1])
 
-        # Determine risk level
         if probability >= 0.7:
             risk_level = "HIGH"
             recommendation = "REJECT — High probability of default"
@@ -122,11 +154,34 @@ async def predict_loan_default(application: LoanApplication):
             risk_level = "LOW"
             recommendation = "APPROVE — Low default risk"
 
-        # Top risk factors based on feature importance
-        feature_importance = pd.read_csv(
-            MODEL_DIR / "feature_importance.csv"
-        )
-        top_factors = feature_importance.head(3)['feature'].tolist()
+        # Personalized reasons using SHAP for THIS applicant
+        top_factors = []
+        try:
+            import shap
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(df.values)
+
+            # Handle both array and list return formats
+            vals = shap_values[0] if isinstance(shap_values, np.ndarray) else shap_values[0]
+
+            feature_shap = pd.DataFrame({
+                'feature': df.columns,
+                'shap': np.array(vals).flatten()
+            })
+
+            # Factors pushing toward default = positive SHAP values
+            pushing_up = feature_shap[feature_shap['shap'] > 0].sort_values(
+                'shap', ascending=False
+            )
+
+            for feat in pushing_up['feature'].head(3):
+                top_factors.append(FEATURE_LABELS.get(feat, feat))
+
+        except Exception as shap_err:
+            logger.warning(f"SHAP failed, using fallback: {shap_err}")
+
+        if not top_factors:
+            top_factors = ['Overall financial profile assessment']
 
         return PredictionResponse(
             loan_id=str(application.loan_amount),
@@ -143,5 +198,4 @@ async def predict_loan_default(application: LoanApplication):
 
 @router.get("/health")
 async def health_check():
-    """Health check endpoint — confirms API is running"""
     return {"status": "NeuralVault API is running", "version": "1.0"}

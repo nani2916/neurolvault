@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import predictions, chatbot
+from api.routers import predictions, chatbot, orchestrator_api
 import logging
 
 logging.basicConfig(
@@ -32,6 +32,12 @@ app.include_router(
     chatbot.router,
     prefix="/api/chatbot",
     tags=["chatbot"]
+)
+
+app.include_router(
+    orchestrator_api.router,
+    prefix="/api/orchestrator",
+    tags=["orchestrator"]
 )
 
 @app.get("/")
